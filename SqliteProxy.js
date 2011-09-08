@@ -1,15 +1,23 @@
 Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
+    
+    constructor: function(config) {
+        console.log("construct");
+        Ext.data.Proxy.superclass.constructor.call(this, config);
+        var me = this;
+        me.createTable();
+    },
     create: function(operation, callback, scope) {
         console.log("create");
+        var me = this;
+        
         var records = this.getTableFields(operation.records),
             length = records.length,
-            id, record, i,me = this;
-        
+            id, record, i,tbl_Id = me.getReader().idProperty || 'ID';
         operation.setStarted();
         
         for (i = 0; i < length; i++) {
             record = records[i];
-            this.setRecord(record, me.dbConfig.tablename, 'ID');
+            this.setRecord(record, me.dbConfig.tablename, tbl_Id);
         }
 
         operation.setCompleted();
@@ -21,15 +29,16 @@ Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
     },
     update: function(operation, callback, scope) {
         console.log("update");
+        var me = this;
         var records = this.getTableFields(operation.records),
             length = records.length,
-            record, id, i,me=this;
-
+            record, id, i, tbl_Id = me.getReader().idProperty || 'ID';
+        
         operation.setStarted();
 
         for (i = 0; i < length; i++) {
             record = records[i];
-            this.updateRecord(record, me.dbConfig.tablename, 'ID');
+            this.updateRecord(record, me.dbConfig.tablename,tbl_Id);
         }
         operation.setCompleted();
         operation.setSuccessful();
@@ -40,7 +49,9 @@ Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
     },
     read: function(operation, callback, scope) {
           console.log("read");
+        
         var thisProxy = this;
+       
         var sql = thisProxy.dbConfig.dbQuery || 'SELECT * FROM '+thisProxy.dbConfig.tablename+'';
         
         var params, onSucess, onError;
@@ -58,12 +69,13 @@ Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
     },
     destroy: function(operation, callback, scope) {
         console.log("destroy");
+        var me = this;
         var records = operation.records,
             length = records.length,
-            i;
-
+            i, tbl_Id = me.getReader().idProperty || 'ID';
+        
         for (i = 0; i < length; i++) {
-            this.removeRecord(records[i].data.ID, 'contact_table', 'ID', false);
+            this.removeRecord(records[i].data[tbl_Id], me.dbConfig.tablename, tbl_Id, false);
         }
 
         operation.setCompleted();
@@ -74,20 +86,72 @@ Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
         }
     },
     /**
+     *@private
+     *Creates table if not exists
+     */
+    createTable : function(){
+        var me = this;
+        console.log(me);
+        me.dbConfig.dbConn.transaction(function(tx) {
+            
+            var onError = function(tx, err) {
+                me.throwDbError(tx, err);
+            };
+            
+            var onSucess = function(tx, results) {
+               console.log("success");
+            }
+        
+            var createTable = function() {
+                var createsql = 'CREATE TABLE IF NOT EXISTS ' + me.dbConfig.tablename + '('+me.constructFields()+')';
+                console.log(createsql);
+                tx.executeSql(createsql,[],onSucess,onError);
+            }
+            var tablesql = 'SELECT * FROM '+ me.dbConfig.tablename+' LIMIT 1';
+            console.log(tablesql);
+            tx.executeSql(tablesql,[], Ext.emptyFn, createTable);
+        });
+        
+    },
+     /**
+     * @private
+     * Get reader data and set up fields accordingly
+     * Used for table creation only
+     * @return {String} fields separated by a comma
+     */
+    constructFields: function() {
+        var me = this,
+            m = me.getModel(),
+            fields = m.prototype.fields.items,
+            flatFields = [];
+
+        Ext.each(fields, function(f) {
+            var name = f.name;
+            var type = f.type.type;
+            var fieldoption = (f.fieldOption)  ? f.fieldOption : '';
+            console.log(f,"fieldopt");
+            type = type.replace(/int/i, 'INTEGER')
+                .replace(/string/i,'TEXT')
+                .replace(/date/i, 'DATETIME');
+
+            flatFields.push(name + ' ' + type+' '+fieldoption);
+        });
+        
+        return flatFields.join(',');
+    },
+    /**
      * function to return records w.r.t to table fields. If model has fields
      * which is not table field name, it will break create and update functionalitites.This looks for field property "isTableField"
      */
     getTableFields : function(records){
        
-        var modelFields = this.model.datafields ;
-        var  newrecords = [],removedField = [], length = records.length;
-        
-        
-        Ext.each(modelFields,function(item,index){
-            if(item.isTableField == false){
-                removedField.push(item.name);
-            }
-        });
+        var  newrecords = [],removedField = [], length = records.length,
+            m = this.getModel(), modelFields = m.prototype.fields.items;
+            Ext.each(modelFields,function(item,index){
+                if(item.isTableField == false){
+                    removedField.push(item.name);
+                }
+            });
         
       
         for (i = 0; i < length; i++) {

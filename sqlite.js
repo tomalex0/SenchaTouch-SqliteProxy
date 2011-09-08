@@ -13,10 +13,10 @@ Ext.setup({
 		
 	    Ext.DbConnection = new Ext.Sqlite.Connection(dbconnval);
 		
-	    Ext.DbConnection.dbConn.transaction(function(tx) {
-			var sql = "CREATE TABLE contact_table(ID INTEGER PRIMARY KEY ASC, firstName TEXT,lastName TEXT,modifyDate TEXT)";
-			tx.executeSql(sql, ([]), function(){}, function(){});
-	    });
+	//    Ext.DbConnection.dbConn.transaction(function(tx) {
+	//		var sql = "CREATE TABLE contact_table(ID INTEGER PRIMARY KEY ASC, firstName TEXT,lastName TEXT,modifyDate TEXT)";
+	//		tx.executeSql(sql, ([]), function(){}, function(){});
+	//    });
 		
 		
 		var calculateDesiredWidth = function() {
@@ -162,7 +162,8 @@ Ext.setup({
 					type : 'string'
 				},{
 					name : 'ID',
-					type : 'int'
+					type : 'int',
+					fieldOption : 'PRIMARY KEY ASC'
 				},{
 					name : 'modifyDate',
 					type : 'string'
@@ -181,9 +182,9 @@ Ext.setup({
             proxy: {
                 type: 'sqlitestorage',
 				dbConfig :{
-					tablename 	: 'contact_table',
+					tablename 	: 'contacts_tables',
 					dbConn 	: Ext.DbConnection.dbConn,
-					//dbQuery : 'SELECT * FROM contact_table limit 0,1' //only works with read operation
+					//dbQuery : 'SELECT * FROM contact_table limit 0,1' //dbQuery only works with read operation
 				},
 				reader : {
 					idProperty : 'ID'
