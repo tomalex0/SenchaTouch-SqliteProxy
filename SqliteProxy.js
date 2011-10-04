@@ -126,15 +126,17 @@ Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
             flatFields = [];
 
         Ext.each(fields, function(f) {
-            var name = f.name;
-            var type = f.type.type;
-            var fieldoption = (f.fieldOption)  ? f.fieldOption : '';
-            console.log(f,"fieldopt");
-            type = type.replace(/int/i, 'INTEGER')
-                .replace(/string/i,'TEXT')
-                .replace(/date/i, 'DATETIME');
-
-            flatFields.push(name + ' ' + type+' '+fieldoption);
+	    if(f.isTableField || !Ext.isDefined(f.isTableField)){
+		var name = f.name;
+		var type = f.type.type;
+		var fieldoption = (f.fieldOption)  ? f.fieldOption : '';
+		console.log(f,"fieldopt");
+		type = type.replace(/int/i, 'INTEGER')
+		    .replace(/string/i,'TEXT')
+		    .replace(/date/i, 'DATETIME');
+    
+		flatFields.push(name + ' ' + type+' '+fieldoption);
+	    }
         });
         
         return flatFields.join(',');
