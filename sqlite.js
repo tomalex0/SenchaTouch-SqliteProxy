@@ -69,6 +69,9 @@ Ext.setup({
 				xtype: 'form',
 				items: [{
 					xtype: 'fieldset',
+					defaults:{
+						labelWidth : '45%'
+					},
 					items: [{
 						xtype : 'textfield',
 						label : 'First Name',
@@ -130,7 +133,7 @@ Ext.setup({
 				items: [{
 					xtype: 'fieldset',
 					defaults:{
-						labelWidth : '40%'
+						labelWidth : '45%'
 					},
 					items: [{
 						xtype : 'textfield',
@@ -210,8 +213,6 @@ Ext.setup({
 				xtype: 'toolbar',
 				title: 'SQlite DB',
 				items: [{
-					xtype: 'spacer'
-				}, {
 					text: 'Clear DB',
 					ui: 'decline',
 					handler: function() {
@@ -219,6 +220,8 @@ Ext.setup({
 						p.truncate('contact_table');
 						contactStore.load();
 					}
+				}, {
+					xtype: 'spacer'
 				}, {
 					text: 'Add User',
 					ui: 'action',
@@ -233,7 +236,9 @@ Ext.setup({
 				store: contactStore,
 				onItemDisclosure: true,
 				emptyText: '<div style="text-align:center;">No Records</div>',
-				itemTpl: '<tpl><div style="float:left;">{firstName} {lastName} - Last modified on {modifyDateParsed}</div><div class="x-button x-button-decline delete" style="float:right;text-align:right;margin-right:0.5em;">Delete</div></tpl>',
+				itemTpl: ['<div >{firstName} {lastName} </div>',
+						'<div>{modifyDateParsed}</div>',
+						'<div class="delete" style="position: absolute;float: right;text-align: right;top: 0.5em;right: 3em;"></div>'],
 				onItemDisclosure: function(rec) {
 					var contactmodel = Ext.ModelMgr.create(rec.data,'Contacts');
 					editPnl.getComponent(0).loadModel(contactmodel);
