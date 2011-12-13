@@ -50,9 +50,14 @@ Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
     read: function(operation, callback, scope) {
           console.log("read");
         
-        var thisProxy = this;
+        var thisProxy = this,
+	param_arr = [];
+	
+	Ext.iterate(operation.params,function(a,i){
+	    param_arr.push(i);
+	});
        
-        var sql = thisProxy.dbConfig.dbQuery || 'SELECT * FROM '+thisProxy.dbConfig.tablename+'';
+        var sql = operation.query || thisProxy.dbConfig.dbQuery || 'SELECT * FROM '+thisProxy.dbConfig.tablename+'';
         
         var params, onSucess, onError;
         
@@ -65,7 +70,7 @@ Ext.data.ProxyMgr.registerType("sqlitestorage", Ext.extend(Ext.data.Proxy, {
         };
 
         
-        thisProxy.queryDB(thisProxy.dbConfig.dbConn, sql, onSucess, onError);
+        thisProxy.queryDB(thisProxy.dbConfig.dbConn, sql, onSucess, onError,param_arr);
     },
     destroy: function(operation, callback, scope) {
         console.log("destroy");
